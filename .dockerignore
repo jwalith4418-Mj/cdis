@@ -1,0 +1,46 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Python caches
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.pytest_cache
+.ruff_cache
+.benchmarks
+
+# Dev / CI config
+.env
+.env.*
+!.env.example
+!.env.production
+*.db
+tests/
+docs/
+*.md
+LICENSE
+pyproject.toml
+requirements-dev.txt
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Nginx (built into its own image)
+nginx/
+
+# IDE / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+Thumbs.db
+.DS_Store
+
+# Alembic (migrations run at deploy time, not baked into the image)
+# alembic/ is intentionally INCLUDED so migrations can run inside the container

@@ -1,0 +1,92 @@
+# ── CDIS Production Docker Compose ────────────────────────────────────
+# Full production stack: Postgres + FastAPI/Gunicorn + Nginx reverse proxy
+#
+# Usage:
+#   cp .env.production .env
+#   # Edit .env with real secrets
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# This file is separate from docker-compose.yml (dev) so neither
+# environment inherits the other's settings accidentally.
+
+services:
+  # ── Postgres ──────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-cdis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-cdis}
+    volumes:
+      - cdis-pg-data:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cdis}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ── FastAPI / Gunicorn ────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: always
+    env_file:
+      - .env
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cdis}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-cdis}
+      TRUST_PROXY_HEADERS: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/api/livez')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    ports:
+      - "${PUBLIC_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./app/static:/usr/share/nginx/html/static:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/api/livez || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  cdis-pg-data:

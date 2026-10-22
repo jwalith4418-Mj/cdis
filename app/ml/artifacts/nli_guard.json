@@ -1,0 +1,18 @@
+{
+  "model_name": "rule-based-nli-guard-v1",
+  "description": "Verifies that no numerical or factual deviation exists in LLM rephrasing.",
+  "allowed_leeway_ratio": 1.1,
+  "max_words_diff": 50,
+  "forbidden_phrases": [
+    "guarantee",
+    "assured",
+    "shoo-in",
+    "odds",
+    "chances",
+    "probability",
+    "likelihood",
+    "unlikely",
+    "almost certain",
+    "certainly"
+  ]
+}

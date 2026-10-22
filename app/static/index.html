@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CDIS — Career Decision Intelligence System</title>
+<meta name="description" content="Evidence-based career decisions. Every recommendation explained, every claim verified, every decision replayable.">
+<meta name="color-scheme" content="light">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F5; --panel:#FFFFFF; --panel-2:#F8F9FB; --ink:#111827; --muted:#556575; --faint:#8595A4;
+  --hair:#D0D7DF; --hair-2:#E5EAF0;
+  --blue:#1D5FBF; --blue-ink:#123C7A; --blue-glow:#3B7FE8; --green:#1A8A4A; --amber:#B07410; --red:#C0362B;
+  --green-bg:#E0F5EA; --amber-bg:#FDF0DD; --red-bg:#FDE8E5; --blue-bg:#E8F0FC;
+  --r-sm:10px; --r:12px; --r-lg:16px;
+  --shadow:0 1px 3px rgba(17,24,39,.05),0 6px 24px rgba(17,24,39,.08);
+  --shadow-sm:0 1px 2px rgba(17,24,39,.06);
+  --shadow-hover:0 4px 16px rgba(17,24,39,.1),0 1px 3px rgba(17,24,39,.06);
+  --ring:0 0 0 3px rgba(29,95,191,.25);
+  --display:"Archivo","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --appbar-h:60px;
+  --transition:cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--display);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea,select{font:inherit;color:var(--ink)}
+:focus-visible{outline:none;box-shadow:var(--ring);border-radius:8px}
+a{color:var(--blue);text-underline-offset:2px}
+h1,h2,h3{font-stretch:90%;letter-spacing:-.01em}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--blue)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.hidden{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.skip{position:fixed;left:12px;top:-60px;z-index:200;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;transition:top .15s ease}
+.skip:focus{top:12px}
+
+/* ---------- top progress ---------- */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--blue),var(--blue-glow));z-index:300;transition:width .3s ease,opacity .3s ease;opacity:0;border-radius:0 2px 2px 0}
+#progress.on{opacity:1}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:var(--r-sm);font-weight:650;line-height:1;transition:all .15s var(--transition);white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:16px;height:16px;flex:none}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--blue-glow));color:#fff;box-shadow:0 1px 3px rgba(18,60,122,.35),0 0 0 1px rgba(29,95,191,.15)}
+.btn-primary:hover{box-shadow:0 3px 12px rgba(18,60,122,.35),0 0 0 1px rgba(29,95,191,.3);transform:translateY(-1px)}
+.btn-quiet{border:1px solid var(--hair);background:var(--panel);box-shadow:var(--shadow-sm)}
+.btn-quiet:hover{border-color:var(--muted);background:var(--panel-2);box-shadow:var(--shadow)}
+.btn-danger{color:var(--red);border:1px solid var(--hair);background:var(--panel);box-shadow:var(--shadow-sm)}
+.btn-danger:hover{border-color:var(--red);background:var(--red-bg)}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px}
+.btn[disabled]{opacity:.5;cursor:not-allowed;filter:grayscale(.3)}
+.btn[aria-busy="true"]{cursor:progress;color:transparent!important}
+.btn[aria-busy="true"]::after{content:"";position:absolute;width:16px;height:16px;border:2.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .55s linear infinite;color:#fff}
+.btn-quiet[aria-busy="true"]::after,.btn-danger[aria-busy="true"]::after{color:var(--ink)}
+.btn{position:relative}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- fields ---------- */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:650;margin-bottom:6px;color:var(--muted)}
+.field .hint{font-weight:400;color:var(--faint)}
+.input,.field input,.field textarea,.field select,select.input{width:100%;padding:11px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--panel);transition:border-color .15s ease,box-shadow .15s ease}
+.input:focus,.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--blue);box-shadow:var(--ring);outline:none;background:#fff}
+.field textarea{resize:vertical;min-height:120px;font-family:var(--mono);font-size:12.5px;line-height:1.55}
+.pwwrap{position:relative}
+.pwwrap .btn-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);padding:6px;border-radius:8px;color:var(--muted)}
+.pwwrap .btn-eye:hover{background:var(--bg)}
+.formerr{color:var(--red);font-size:13px;min-height:18px;margin-top:6px}
+.inline-form{display:flex;gap:10px;flex-wrap:wrap}
+.inline-form>*{flex:1;min-width:120px}
+
+/* ---------- chips ---------- */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:650;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.chip.High,.chip.accepted,.chip.covered,.chip.ok{background:var(--green-bg);color:var(--green)}
+.chip.Medium,.chip.pending,.chip.weak,.chip.warn{background:var(--amber-bg);color:var(--amber)}
+.chip.Low,.chip.manual_review,.chip.missing,.chip.down{background:var(--red-bg);color:var(--red)}
+.chip.info{background:var(--blue-bg);color:var(--blue-ink)}
+.chip.ghost{background:var(--bg);color:var(--muted)}
+
+/* ---------- landing ---------- */
+#landing{max-width:1080px;margin:0 auto;padding:0 24px}
+.land-top{display:flex;justify-content:space-between;align-items:center;padding:22px 0}
+.wordmark{font-weight:800;letter-spacing:.04em;font-size:18px;display:inline-flex;align-items:center;gap:2px}
+.wordmark .dot{color:var(--blue)}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;padding:48px 0 64px}
+.hero h1{font-size:clamp(34px,5vw,56px);line-height:1.04;font-weight:800;letter-spacing:-.02em;font-stretch:87%}
+.hero h1 em{font-style:normal;color:var(--blue)}
+.hero p.lede{margin:20px 0 8px;font-size:17px;color:var(--muted);max-width:44ch}
+.doctrine{margin-top:26px;display:flex;flex-wrap:wrap;gap:8px}
+.doctrine span{font-family:var(--mono);font-size:12px;padding:5px 11px;border:1px solid var(--hair);border-radius:999px;background:var(--panel);color:var(--muted);transition:border-color .15s}
+.doctrine span:hover{border-color:var(--blue)}
+.hero-proof{margin-top:30px;border-left:3px solid var(--blue);padding:14px 18px;background:var(--panel);border-radius:0 var(--r) var(--r) 0;box-shadow:var(--shadow)}
+.hero-proof .num{font-size:13px}
+.authcard{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:28px;transition:box-shadow .2s}
+.authcard:hover{box-shadow:var(--shadow-hover)}
+.tabs{display:flex;gap:4px;background:var(--bg);border-radius:var(--r-sm);padding:4px;margin-bottom:20px}
+.tabs button{flex:1;padding:9px;border-radius:8px;font-weight:600;color:var(--muted);transition:all .15s var(--transition)}
+.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);box-shadow:var(--shadow-sm)}
+.principles{padding:0 0 72px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.principles article{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r);padding:20px;transition:all .2s var(--transition)}
+.principles article:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.principles h3{font-size:14.5px;margin:10px 0 6px}
+.principles p{font-size:13px;color:var(--muted)}
+
+/* ---------- app shell ---------- */
+.appbar{position:sticky;top:0;z-index:50;height:var(--appbar-h);display:flex;align-items:center;gap:14px;padding:0 22px;background:rgba(255,255,255,.88);backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid var(--hair);transition:box-shadow .2s}
+.appbar .wordmark{font-size:16px}
+.appbar .spacer{flex:1}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border:1px solid var(--hair);border-radius:999px;background:var(--panel);font-size:12.5px;color:var(--muted);box-shadow:var(--shadow-sm);transition:all .15s var(--transition)}
+.pill:hover{border-color:var(--muted);box-shadow:var(--shadow)}
+.userchip{font-size:13px;color:var(--muted);max-width:22ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none;box-shadow:0 0 0 2px rgba(26,138,74,.15)}
+.dot.warn{background:var(--amber);box-shadow:0 0 0 2px rgba(176,116,16,.15)} .dot.down{background:var(--red);box-shadow:0 0 0 2px rgba(192,54,43,.15)} .dot.idle{background:var(--faint);box-shadow:none}
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr);max-width:1440px;margin:0 auto}
+.nav{position:sticky;top:var(--appbar-h);align-self:start;height:calc(100vh - var(--appbar-h));display:flex;flex-direction:column;gap:3px;padding:18px 12px;border-right:1px solid var(--hair);background:var(--panel)}
+.nav a{display:flex;align-items:center;gap:11px;padding:10px 13px;border-radius:var(--r-sm);color:var(--muted);font-weight:600;font-size:13.5px;text-decoration:none;transition:all .15s var(--transition)}
+.nav a svg{width:18px;height:18px;flex:none;opacity:.75;transition:opacity .15s}
+.nav a:hover{background:var(--bg);color:var(--ink)}
+.nav a:hover svg{opacity:1}
+.nav a[aria-current="page"]{background:var(--blue-bg);color:var(--blue-ink);box-shadow:inset 3px 0 0 var(--blue)}
+.nav a[aria-current="page"] svg{opacity:1;color:var(--blue)}
+.nav .navbadge{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;background:var(--bg);color:var(--muted);border-radius:999px;padding:2px 8px;min-width:22px;text-align:center}
+.nav a[aria-current="page"] .navbadge{background:#fff;color:var(--blue-ink)}
+.nav .navttl{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:700;padding:14px 13px 6px}
+main{min-width:0;padding:28px 32px 72px;max-width:1060px}
+.viewhead{margin-bottom:20px}
+.viewhead h1{font-size:24px;font-weight:750;letter-spacing:-.015em;outline:none}
+.viewhead p{color:var(--muted);font-size:14px;margin-top:5px;max-width:70ch}
+
+/* ---------- cards ---------- */
+.card{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:22px 24px;margin-bottom:18px;transition:box-shadow .2s var(--transition)}
+.card:hover{box-shadow:var(--shadow-hover)}
+.card>h2{font-size:15.5px;font-weight:750;display:flex;align-items:center;gap:9px;margin-bottom:4px}
+.card>h2 svg{width:17px;height:17px;color:var(--blue)}
+.card .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+.card .sub:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.groupttl{margin:18px 0 8px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.groupttl:first-child{margin-top:0}
+
+/* ---------- overview ---------- */
+.hello{font-size:14px;color:var(--muted)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.tile{background:var(--panel);border:1px solid var(--hair);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow-sm);transition:all .2s var(--transition)}
+.tile:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+.tile .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:700}
+.tile .v{font-family:var(--mono);font-size:28px;font-weight:700;margin-top:6px;line-height:1;color:var(--ink)}
+.tile .v small{font-size:13px;color:var(--faint);font-weight:500}
+.steps{display:flex;flex-direction:column;gap:8px}
+.step{display:flex;align-items:center;gap:12px;padding:13px 16px;border:1px solid var(--hair);border-radius:var(--r);background:var(--panel-2);text-align:left;width:100%;transition:all .15s var(--transition)}
+.step:hover{border-color:var(--blue);background:var(--panel);box-shadow:var(--shadow-sm)}
+.step .mark{width:28px;height:28px;border-radius:50%;border:2px solid var(--hair);display:grid;place-items:center;flex:none;font-family:var(--mono);font-size:12px;color:var(--muted);transition:all .2s}
+.step.done .mark{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 0 0 3px rgba(26,138,74,.12)}
+.step .txt{flex:1;min-width:0}
+.step .txt b{font-size:14px;font-weight:650;display:block}
+.step .txt span{font-size:12.5px;color:var(--muted)}
+.step .go{color:var(--faint);transition:color .15s}
+.step:hover .go{color:var(--blue)}
+.progressbar{height:7px;border-radius:5px;background:var(--bg);overflow:hidden;margin:2px 0 16px}
+.progressbar i{display:block;height:100%;background:linear-gradient(90deg,var(--green),#34D399);border-radius:5px;transition:width .6s cubic-bezier(.2,.9,.3,1)}
+.healthgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px}
+.hcell{border:1px solid var(--hair);border-radius:var(--r-sm);padding:11px 13px;background:var(--panel-2);transition:border-color .15s}
+.hcell:hover{border-color:var(--muted)}
+.hcell .hl{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600}
+.hcell .hm{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+
+/* ---------- facts ---------- */
+.factlist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.fact{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;padding:10px 12px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--panel-2);transition:border-color .15s}
+.fact:hover{border-color:var(--muted)}
+.fact .val{flex:1;min-width:0;overflow-wrap:anywhere}
+.fact .detail{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.pendbox{border:1px solid var(--amber);border-radius:var(--r);padding:16px;background:var(--amber-bg);margin-top:8px}
+.pendbox h3{font-size:13px;color:var(--amber);margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.pendbox .fact{background:#fff;border-color:#EAD9BE;flex-wrap:wrap}
+.parsebox{border:1px solid var(--hair);border-radius:var(--r);padding:14px 16px;background:var(--panel-2);margin-top:12px;font-size:13px}
+
+/* ---------- scorecard ---------- */
+table.score{width:100%;border-collapse:collapse;font-size:13.5px}
+table.score th{text-align:left;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:7px 8px;border-bottom:2px solid var(--hair);font-weight:700}
+table.score td{padding:11px 8px;border-bottom:1px solid var(--hair-2);vertical-align:top}
+table.score tr:last-child td{border-bottom:none}
+table.score tr:hover td{background:var(--panel-2)}
+.scorebar{height:8px;border-radius:5px;background:var(--bg);overflow:hidden;min-width:80px}
+.scorebar i{display:block;height:100%;border-radius:5px;transition:width .6s cubic-bezier(.2,.9,.3,1)}
+details.ev{font-size:12.5px;color:var(--muted);margin-top:6px}
+details.ev summary{cursor:pointer;color:var(--blue);font-weight:600;transition:color .15s}
+details.ev summary:hover{color:var(--blue-ink)}
+details.ev ul{margin:6px 0 0;padding-left:16px}
+details.ev li{margin:3px 0}
+.weights{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.weights .chip{cursor:default;transition:transform .1s}
+.weights .chip:hover{transform:scale(1.05)}
+
+/* ---------- alignment instrument ---------- */
+.instrument{margin:10px 0 8px}
+.gauge{position:relative;height:54px}
+.gauge .track{position:absolute;left:0;right:0;top:24px;height:12px;border-radius:7px;background:linear-gradient(90deg,var(--red-bg),var(--amber-bg) 45%,var(--green-bg))}
+.gauge .ticks{position:absolute;left:0;right:0;top:18px;height:23px}
+.gauge .tick{position:absolute;top:0;width:1px;height:23px;background:var(--hair)}
+.gauge .needle{position:absolute;top:12px;width:3px;height:36px;background:var(--ink);border-radius:2px;transition:left .7s cubic-bezier(.2,.9,.3,1);box-shadow:0 0 8px rgba(17,24,39,.15)}
+.gauge .readout{position:absolute;top:-17px;transform:translateX(-50%);font-family:var(--mono);font-weight:700;font-size:24px;transition:left .7s cubic-bezier(.2,.9,.3,1)}
+.gaugelabels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px}
+.factor{margin-top:8px;padding:12px 14px;border:1px solid var(--hair);border-radius:var(--r-sm);background:var(--panel-2);transition:border-color .15s}
+.factor:hover{border-color:var(--muted)}
+.factor .row{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:650}
+.factor .why{font-size:12.5px;color:var(--muted);margin-top:3px}
+.factor .gain{color:var(--green);font-family:var(--mono)}
+.invest{margin-top:16px;border:1px solid var(--blue);border-radius:var(--r);padding:16px;background:var(--blue-bg);transition:box-shadow .2s}
+.invest:hover{box-shadow:0 0 0 3px rgba(29,95,191,.1)}
+.invest h3{font-size:14px;color:var(--blue-ink);display:flex;align-items:center;gap:7px}
+.invest p{font-size:13px;margin-top:5px}
+.disclaim{margin-top:14px;font-size:12px;color:var(--muted);border-top:1px dashed var(--hair);padding-top:10px}
+
+/* ---------- resume + diff ---------- */
+pre.doc{font-family:var(--mono);font-size:12.5px;line-height:1.6;background:var(--panel-2);border:1px solid var(--hair);border-radius:var(--r-sm);padding:16px;overflow:auto;max-height:400px;white-space:pre-wrap}
+pre.diff{font-family:var(--mono);font-size:12px;line-height:1.55;border:1px solid var(--hair);border-radius:var(--r-sm);padding:14px;overflow:auto;max-height:300px;background:var(--panel-2)}
+pre.diff .add{color:var(--green);background:var(--green-bg);display:block;padding:0 4px;border-radius:3px}
+pre.diff .del{color:var(--red);background:var(--red-bg);display:block;padding:0 4px;border-radius:3px}
+pre.diff .ctx{color:var(--muted);display:block}
+.vrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--hair);border-radius:var(--r-sm);margin-top:6px;font-size:13px;background:var(--panel-2);transition:border-color .15s}
+.vrow:hover{border-color:var(--muted)}
+
+/* ---------- audit ---------- */
+.arow{display:flex;gap:10px;align-items:center;padding:11px 13px;border:1px solid var(--hair);border-radius:var(--r-sm);margin-top:6px;font-size:13px;background:var(--panel-2);cursor:pointer;transition:all .15s var(--transition);width:100%;text-align:left}
+.arow:hover{border-color:var(--blue);background:var(--panel);box-shadow:var(--shadow-sm)}
+.arow[aria-expanded="true"]{border-color:var(--blue);box-shadow:var(--shadow-sm);background:var(--panel)}
+.replay{margin-top:12px;border:1px solid var(--hair);border-radius:var(--r);padding:16px;background:var(--panel-2);font-size:13px}
+.replay dl{margin:0}
+.replay dt{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-top:12px;font-weight:700}
+.replay dd{margin:4px 0 0}
+.kv{font-family:var(--mono);font-size:12px;overflow-wrap:anywhere}
+
+/* ---------- skeleton + empty ---------- */
+.skel{border-radius:var(--r-sm);background:linear-gradient(90deg,var(--bg) 25%,#DEE4EC 37%,var(--bg) 63%);background-size:400% 100%;animation:sh 1.4s ease-in-out infinite;height:16px;margin:8px 0}
+@keyframes sh{0%{background-position:100% 0}100%{background-position:-100% 0}}
+.empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:32px 20px;border:1.5px dashed var(--hair);border-radius:var(--r);color:var(--muted);background:var(--panel-2)}
+.empty svg{width:28px;height:28px;color:var(--faint)}
+.empty b{color:var(--ink);font-size:14.5px;font-weight:650}
+.empty p{font-size:13px;max-width:42ch}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:120;display:flex;flex-direction:column;gap:8px;max-width:380px}
+.toast{background:var(--ink);color:#fff;border-radius:var(--r-sm);padding:12px 16px;font-size:13.5px;box-shadow:0 8px 24px rgba(17,24,39,.2);animation:pop .2s var(--transition);display:flex;gap:9px;align-items:flex-start;backdrop-filter:blur(8px)}
+.toast.err{background:var(--red)}
+.toast svg{width:16px;height:16px;flex:none;margin-top:1px}
+@keyframes pop{from{transform:translateY(8px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+
+/* view transition */
+.view-enter{animation:vin .25s var(--transition)}
+@keyframes vin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .nav{position:sticky;top:var(--appbar-h);height:auto;flex-direction:row;gap:4px;overflow-x:auto;border-right:none;border-bottom:1px solid var(--hair);padding:8px 12px;-webkit-overflow-scrolling:touch}
+  .nav .navttl{display:none}
+  .nav a{flex:none;white-space:nowrap}
+  .nav a[aria-current="page"]{box-shadow:inset 0 -2px 0 var(--blue)}
+  .nav .navbadge{margin-left:6px}
+  main{padding:20px 16px 64px}
+  .tiles{grid-template-columns:repeat(2,1fr)}
+  .healthgrid{grid-template-columns:repeat(2,1fr)}
+  .grid2{grid-template-columns:1fr}
+  .hero{grid-template-columns:1fr;padding-top:28px;gap:32px}
+  .principles{grid-template-columns:1fr}
+  .userchip{display:none}
+}
+@media (max-width:520px){
+  .tiles{grid-template-columns:1fr 1fr}
+  .appbar{padding:0 14px;gap:10px}
+  .pill .pilltext{display:none}
+}
+</style>
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+<div id="progress" aria-hidden="true"></div>
+
+<!-- ======================= LANDING ======================= -->
+<div id="landing">
+  <div class="land-top">
+    <div class="wordmark">CDIS<span class="dot">.</span></div>
+    <a href="/api/docs" class="eyebrow" style="text-decoration:none">API docs →</a>
+  </div>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Career Decision Intelligence System</div>
+      <h1>Stop guessing your career. <em>Verify it.</em></h1>
+      <p class="lede">CDIS builds a living, evidence-verified model of your professional self — then shows you, with receipts, exactly what stands between you and your target role.</p>
+      <div class="doctrine">
+        <span>evidence over claims</span><span>humans approve, AI recommends</span><span>every decision replayable</span><span>graceful degradation</span>
+      </div>
+      <div class="hero-proof">
+        <div class="eyebrow">Not a promise engine</div>
+        <div class="num">alignment 72/100 · limiting factor: Cloud deployment · est. gain +6</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">CDIS never shows a "chance of getting hired." Every number traces to evidence you can inspect.</div>
+      </div>
+    </div>
+    <div class="authcard">
+      <div class="tabs" role="tablist" aria-label="Sign in or create account">
+        <button role="tab" aria-selected="true" id="tab-in" aria-controls="authform" onclick="authTab('in')">Sign in</button>
+        <button role="tab" aria-selected="false" id="tab-up" aria-controls="authform" onclick="authTab('up')">Create account</button>
+      </div>
+      <form id="authform" onsubmit="return submitAuth(event)" novalidate>
+        <div class="field hidden" id="f-name"><label for="a-name">Name</label><input id="a-name" class="input" autocomplete="name" maxlength="120"></div>
+        <div class="field"><label for="a-email">Email</label><input id="a-email" class="input" type="email" autocomplete="email" required></div>
+        <div class="field">
+          <label for="a-pass">Password <span class="hint">(8+ characters)</span></label>
+          <div class="pwwrap">
+            <input id="a-pass" class="input" type="password" autocomplete="current-password" minlength="8" required style="padding-right:40px">
+            <button type="button" class="btn-eye" id="a-eye" aria-pressed="false" aria-label="Show password" onclick="togglePw()">👁</button>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="authbtn" style="width:100%">Sign in</button>
+        <div class="formerr" id="autherr" role="alert" aria-live="assertive"></div>
+      </form>
+    </div>
+  </section>
+  <section class="principles" aria-label="How CDIS works">
+    <article><span class="chip info">01 · Twin</span><h3>One source of truth</h3><p>Your Career Twin is an append-only record. Nothing is overwritten; every change is a versioned event you can roll back and audit.</p></article>
+    <article><span class="chip info">02 · Evidence</span><h3>Certificates don't impress us</h3><p>A certificate alone caps a skill at Medium. Repos, deployments, and shipped projects are what move your scorecard.</p></article>
+    <article><span class="chip info">03 · Replay</span><h3>Ask "why?" and get an answer</h3><p>Every recommendation stores its evidence, engine version, and inputs. Replay reconstructs the exact reasoning path, deterministically.</p></article>
+  </section>
+</div>
+
+<!-- ======================= APP ======================= -->
+<div id="shell" class="hidden">
+  <header class="appbar">
+    <div class="wordmark">CDIS<span class="dot">.</span></div>
+    <div class="spacer"></div>
+    <button class="pill" id="missionpill" onclick="navigate('overview')" title="Mission health">
+      <span class="dot idle" id="ms-dot"></span><span class="pilltext" id="ms-label">Checking…</span>
+    </button>
+    <span class="userchip" id="userchip"></span>
+    <button class="btn btn-quiet btn-sm" onclick="logout()" aria-label="Sign out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span>Sign out</span>
+    </button>
+  </header>
+  <div class="layout">
+    <nav class="nav" id="nav" aria-label="Primary"></nav>
+    <main id="main" tabindex="-1" aria-busy="false"></main>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- icons ---------- */
+const ICON = {
+  overview:'<path d="M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 13h7v8H3z"/>',
+  twin:'<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  evidence:'<path d="M12 2l7 3v6c0 5-3.5 8-7 9-3.5-1-7-4-7-9V5z"/><polyline points="9 12 11 14 15 10"/>',
+  gap:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+  resume:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>',
+  audit:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 8 12 12 15 14"/>',
+  go:'<polyline points="9 6 15 12 9 18"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  spark:'<path d="M12 3v4M12 17v4M5 12H1M23 12h-4M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  info:'<circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.6" fill="currentColor"/>',
+  empty:'<path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/>'
+};
+const svg = (n,cls="") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]||""}</svg>`;
+
+/* ---------- state ---------- */
+let state = {
+  token: localStorage.getItem("cdis_token"), name: localStorage.getItem("cdis_name"),
+  email: localStorage.getItem("cdis_email"),
+  twin:null, scorecard:null, versions:[], audit:[], mission:null,
+  lastDraft:null, lastGap:null, lastDecisionId:null, replay:null, killDenied:false,
+  forms:{}
+};
+const PERSIST = ["resumetext","mf-value","ev-ref","gap-label","gap-jd","resume-label","resume-jd"];
+
+/* ---------- toast ---------- */
+function toast(msg,isErr){
+  const t=document.createElement("div"); t.className="toast"+(isErr?" err":"");
+  t.innerHTML=`${svg(isErr?"info":"check")}<span>${esc(msg)}</span>`;
+  $("toasts").appendChild(t); setTimeout(()=>t.remove(),4200);
+}
+
+/* ---------- api with global progress ---------- */
+let inflight=0;
+function progress(on){
+  inflight=Math.max(0,inflight+(on?1:-1));
+  const el=$("progress");
+  if(inflight>0){ el.classList.add("on"); el.style.width="72%"; }
+  else { el.style.width="100%"; setTimeout(()=>{el.classList.remove("on");el.style.width="0";},200); }
+}
+async function api(path,opts={}){
+  opts.headers=Object.assign({"Content-Type":"application/json"},
+    state.token?{"Authorization":"Bearer "+state.token}:{},opts.headers||{});
+  progress(true);
+  try{
+    const res=await fetch(path,opts);
+    if(res.status===401 && state.token){ logout(); throw new Error("Session expired. Sign in again."); }
+    let body=null; try{ body=await res.json(); }catch(e){ body=null; }
+    if(!res.ok){ const d=body&&body.detail; const err=new Error(typeof d==="string"?d:(Array.isArray(d)&&d[0]?.msg)||("Request failed ("+res.status+")")); err.status=res.status; throw err; }
+    return body;
+  } finally { progress(false); }
+}
+async function busy(btn,fn){
+  if(btn){ btn.setAttribute("aria-busy","true"); btn.disabled=true; }
+  try{ return await fn(); }
+  finally{ if(btn){ btn.removeAttribute("aria-busy"); btn.disabled=false; } }
+}
+
+/* ================= AUTH / LANDING ================= */
+let mode="in";
+function authTab(m){ mode=m;
+  $("tab-in").setAttribute("aria-selected",m==="in"); $("tab-up").setAttribute("aria-selected",m==="up");
+  $("f-name").classList.toggle("hidden",m==="in");
+  $("a-pass").setAttribute("autocomplete",m==="in"?"current-password":"new-password");
+  $("authbtn").textContent=m==="in"?"Sign in":"Create account"; $("autherr").textContent="";
+}
+function togglePw(){ const i=$("a-pass"),b=$("a-eye"),show=i.type==="password";
+  i.type=show?"text":"password"; b.setAttribute("aria-pressed",String(show));
+  b.setAttribute("aria-label",show?"Hide password":"Show password"); }
+async function submitAuth(ev){ ev.preventDefault(); $("autherr").textContent="";
+  const email=$("a-email").value.trim(), password=$("a-pass").value;
+  if(!email){ $("autherr").textContent="Enter your email."; return false; }
+  if(password.length<8){ $("autherr").textContent="Password must be at least 8 characters."; return false; }
+  await busy($("authbtn"),async()=>{
+    try{
+      const body={email,password}; let out;
+      if(mode==="up"){ body.name=$("a-name").value.trim()||email.split("@")[0];
+        out=await api("/api/auth/register",{method:"POST",body:JSON.stringify(body)}); }
+      else out=await api("/api/auth/login",{method:"POST",body:JSON.stringify(body)});
+      state.token=out.token; state.name=out.name; state.email=out.email;
+      localStorage.setItem("cdis_token",out.token); localStorage.setItem("cdis_name",out.name||"");
+      localStorage.setItem("cdis_email",out.email||"");
+      enterApp();
+    }catch(e){ $("autherr").textContent=e.message; }
+  });
+  return false;
+}
+function logout(){ ["cdis_token","cdis_name","cdis_email"].forEach(k=>localStorage.removeItem(k));
+  state.token=null;
+  $("shell").classList.add("hidden"); $("landing").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+/* ================= NAV ================= */
+const ROUTES=["overview","twin","evidence","gap","resume","audit"];
+const NAVMETA={
+  overview:{icon:"overview",label:"Overview"},
+  twin:{icon:"twin",label:"Career Twin"},
+  evidence:{icon:"evidence",label:"Evidence"},
+  gap:{icon:"gap",label:"Gap Analysis"},
+  resume:{icon:"resume",label:"Resume Studio"},
+  audit:{icon:"audit",label:"Decision Audit"}
+};
+function currentRoute(){ const r=(location.hash||"").replace(/^#\/?/,""); return ROUTES.includes(r)?r:"overview"; }
+function navigate(r){ location.hash="#/"+r; }
+function badge(route){
+  if(route==="twin") return state.twin?.pending?.length||0;
+  if(route==="evidence") return state.scorecard?.rows?.length||0;
+  if(route==="gap"||route==="audit") return state.audit?.length||0;
+  if(route==="resume") return state.versions?.length||0;
+  return 0;
+}
+function renderNav(){
+  const r=currentRoute();
+  $("nav").innerHTML=`<div class="navttl">Workspace</div>`+ROUTES.map(rt=>{
+    const m=NAVMETA[rt], b=badge(rt);
+    return `<a href="#/${rt}" ${rt===r?'aria-current="page"':''}>${svg(m.icon)}<span>${m.label}</span>${b?`<span class="navbadge">${b}</span>`:""}</a>`;
+  }).join("");
+}
+
+/* ================= DATA ================= */
+async function loadAll(){
+  const [twin,card,versions,audit,mission]=await Promise.allSettled([
+    api("/api/twin"),api("/api/twin/scorecard"),api("/api/resume/versions"),
+    api("/api/audit"),api("/api/health/mission")
+  ]);
+  if(twin.status==="fulfilled") state.twin=twin.value;
+  if(card.status==="fulfilled") state.scorecard=card.value;
+  if(versions.status==="fulfilled") state.versions=versions.value;
+  if(audit.status==="fulfilled") state.audit=audit.value;
+  if(mission.status==="fulfilled") state.mission=mission.value;
+}
+async function refreshTwin(){ state.twin=await api("/api/twin"); state.scorecard=await api("/api/twin/scorecard"); }
+async function refreshVersions(){ state.versions=await api("/api/resume/versions"); }
+async function refreshAudit(){ state.audit=await api("/api/audit"); }
+async function refreshMission(){ try{ state.mission=await api("/api/health/mission"); }catch(e){} }
+
+/* ================= RENDER SHELL ================= */
+function saveForms(){ PERSIST.forEach(id=>{ const el=$(id); if(el) state.forms[id]=el.value; }); }
+function restoreForms(){ PERSIST.forEach(id=>{ const el=$(id); if(el && state.forms[id]!=null) el.value=state.forms[id]; }); }
+
+function renderRoute(){
+  if(!state.token){ $("shell").classList.add("hidden"); $("landing").classList.remove("hidden"); return; }
+  $("landing").classList.add("hidden"); $("shell").classList.remove("hidden");
+  const r=currentRoute();
+  renderNav(); renderMissionPill();
+  const main=$("main");
+  main.innerHTML=VIEW[r]();
+  main.classList.remove("view-enter"); void main.offsetWidth; main.classList.add("view-enter");
+  restoreForms();
+  const head=main.querySelector("h1"); if(head) head.focus();
+  if(r==="gap" && state.lastGap) animateGauge();
+}
+document.addEventListener("input",e=>{ if(PERSIST.includes(e.target.id)) state.forms[e.target.id]=e.target.value; });
+
+function renderMissionPill(){
+  const m=state.mission; const dot=$("ms-dot"),lab=$("ms-label"); if(!dot) return;
+  if(!m){ dot.className="dot idle"; lab.textContent="Checking…"; return; }
+  const degraded=m.mission_status==="degraded";
+  const llm=(m.components?.llm_adapter||""); const sim=String(llm).startsWith("simulated");
+  dot.className="dot "+(sim?"warn":degraded?"down":"");
+  lab.textContent=sim?"LLM simulated down":degraded?"Degraded":"Systems OK";
+}
+
+/* helpers */
+const bandColor=b=>b==="High"?"var(--green)":b==="Medium"?"var(--amber)":"var(--red)";
+function emptyState(icon,title,msg,cta){
+  return `<div class="empty">${svg(icon)}<b>${esc(title)}</b><p>${esc(msg)}</p>${cta?`<button class="btn btn-primary btn-sm" onclick="${cta.action}">${esc(cta.label)}</button>`:""}</div>`;
+}
+function head(title,sub){ return `<div class="viewhead"><h1 tabindex="-1">${esc(title)}</h1><p>${esc(sub)}</p></div>`; }
+function compStatus(c){ return (c && typeof c==="object") ? c.status : (c==="healthy"?"healthy":c); }
+
+/* ================= VIEWS ================= */
+const VIEW={};
+
+VIEW.overview=function(){
+  const t=state.twin, card=state.scorecard;
+  const acc=t?t.accepted:{}; const skills=(acc.skill||[]);
+  const factCount=t?Object.values(acc).reduce((n,a)=>n+a.length,0):0;
+  const withEvidence=(card?.rows||[]).some(r=>r.evidence.length);
+  const bestAlign=state.audit.reduce((m,d)=>Math.max(m,d.alignment_score??0),0);
+  const steps=[
+    {done:skills.length>0, b:"Build your Career Twin", s:"Paste a resume so we can extract verified facts.", go:"twin"},
+    {done:withEvidence, b:"Attach real evidence", s:"Link a repo, deployment, or project to a skill.", go:"evidence"},
+    {done:state.audit.length>0, b:"Analyze a target role", s:"Paste a job description to see your alignment.", go:"gap"},
+    {done:state.versions.length>0, b:"Approve a tailored resume", s:"Draft from accepted facts, then approve the diff.", go:"resume"},
+  ];
+  const doneN=steps.filter(s=>s.done).length; const pct=Math.round(doneN/steps.length*100);
+  const tiles=[
+    {k:"Accepted facts",v:factCount},
+    {k:"Skills scored",v:skills.length},
+    {k:"Best alignment",v:bestAlign?`${bestAlign}<small>/100</small>`:"—"},
+    {k:"Resume versions",v:state.versions.length},
+  ];
+  const m=state.mission;
+  const comps=m?[["Database",compStatus(m.components.database)],["Parser chain",compStatus(m.components.parser_chain)],["Rule engine",compStatus(m.components.rule_engine)],["LLM adapter",m.components.llm_adapter]]:[];
+  const dotFor=s=>{ s=String(s); if(s==="healthy")return""; if(s.startsWith("not_configured")||s.startsWith("configured"))return""; if(s.startsWith("simulated"))return"warn"; if(s==="unavailable"||s==="down")return"down"; return"warn"; };
+  const recent=state.audit.slice(0,3);
+  return `${head("Overview","Your evidence-first career workspace. Complete the steps below — each screen shows its receipts.")}
+    <p class="hello">Welcome back${state.name?`, <strong>${esc(state.name)}</strong>`:""}.</p>
+    <div class="tiles">${tiles.map(x=>`<div class="tile"><div class="k">${x.k}</div><div class="v num">${x.v}</div></div>`).join("")}</div>
+    <div class="card">
+      <h2>${svg("spark")}Getting started</h2>
+      <p class="sub">${doneN} of ${steps.length} complete</p>
+      <div class="progressbar"><i style="width:${pct}%"></i></div>
+      <div class="steps">${steps.map((s,i)=>`
+        <button class="step ${s.done?"done":""}" onclick="navigate('${s.go}')">
+          <span class="mark">${s.done?svg("check"):i+1}</span>
+          <span class="txt"><b>${esc(s.b)}</b><span>${esc(s.s)}</span></span>
+          <span class="go">${svg("go")}</span>
+        </button>`).join("")}</div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h2>${svg("audit")}Recent decisions</h2>
+        <p class="sub">The audit trail behind your recommendations.</p>
+        ${recent.length?recent.map(d=>`<button class="arow" onclick="navigate('audit')">
+          <span class="chip info num">#${d.id}</span><span style="flex:1">${esc(d.target||d.kind)}</span>
+          <span class="num">${d.alignment_score??"—"}/100</span><span class="chip ${d.confidence}">${d.confidence}</span>
+        </button>`).join(""):emptyState("empty","No decisions yet","Run a gap analysis to create your first auditable decision.",{label:"Go to Gap Analysis",action:"navigate('gap')"})}
+      </div>
+      <div class="card">
+        <h2>${svg("info")}Mission health</h2>
+        <p class="sub">${m?esc(m.doctrine):"Checking components…"}</p>
+        ${m?`<div class="healthgrid">${comps.map(([n,s])=>`<div class="hcell"><div class="hl"><span class="dot ${dotFor(s)}"></span>${n}</div><div class="hm">${esc(String(s))}</div></div>`).join("")}</div>
+        <details class="ev" style="margin-top:12px"><summary>Ops · simulate LLM outage (admin)</summary>
+          <label class="kswitch" style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13px;color:var(--muted)">
+            <input type="checkbox" id="killswitch" onchange="toggleKill(this.checked)" ${String(m.components.llm_adapter).startsWith("simulated")?"checked":""}>
+            Simulate LLM outage and watch graceful degradation
+          </label>
+          ${state.killDenied?`<div style="font-size:12px;color:var(--amber);margin-top:6px">Admin-only. Grant <span class="num">is_admin</span> to your account to demo this live.</div>`:""}
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Fallbacks: <span class="num">${Object.entries(m.fallback_counters||{}).map(([k,v])=>k+":"+v).join(" ")||"none yet"}</span></div>
+        </details>`:`<div class="skel" style="width:80%"></div><div class="skel" style="width:60%"></div>`}
+      </div>
+    </div>`;
+};
+
+VIEW.twin=function(){
+  const t=state.twin;
+  const order=[["skill","Skills"],["project","Projects"],["experience","Experience"],["education","Education"],["certification","Certifications"]];
+  let facts="";
+  if(t){ for(const [key,title] of order){ const items=t.accepted[key]||[];
+    if(items.length) facts+=`<div class="groupttl">${title} · ${items.length}</div><div class="factlist">`+
+      items.map(f=>`<div class="fact"><span class="chip accepted">${svg("check")}</span><span class="val">${esc(f.value)}</span></div>`).join("")+`</div>`; } }
+  const pending=t?.pending||[];
+  return `${head("Career Twin","Your single source of truth. Facts above 80% extraction confidence are accepted automatically; everything else waits for you.")}
+    <div class="card">
+      <h2>${svg("twin")}Ingest your resume</h2>
+      <p class="sub">Sections like SKILLS / PROJECTS / EXPERIENCE / EDUCATION / CERTIFICATIONS parse best. Quantified claims always wait for your verification.</p>
+      <div class="field"><label for="resumetext" class="sr-only">Resume text</label><textarea id="resumetext" placeholder="Paste resume text here…"></textarea></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="ingestbtn" onclick="ingest()">${svg("spark")}Analyze resume</button>
+        <label class="btn btn-quiet btn-sm" style="position:relative">${svg("upload")}Upload .txt / .md
+          <input type="file" id="resumefile" accept=".txt,.md,.text" onchange="ingestFile()" style="position:absolute;inset:0;opacity:0;cursor:pointer">
+        </label>
+      </div>
+      <div id="parsereport"></div>
+    </div>
+    ${pending.length?`<div class="card"><h2>${svg("info")}Waiting on you</h2>
+      <p class="sub">${pending.length} fact(s) need a decision before they can enter your Twin or any reasoning.</p>
+      <div class="pendbox"><h3>${svg("info")}Confirm or reject</h3>
+      ${pending.map(f=>`<div class="fact">
+        <span class="chip ${f.status}">${f.status==="pending"?"confirm?":"verify"}</span>
+        <span class="val">${esc(f.value)}<span class="detail">${esc(f.detail||"")} · conf <span class="num">${f.confidence}</span></span></span>
+        <button class="btn btn-quiet btn-sm" onclick="resolveFact(${f.id},'confirm')">Yes, it's mine</button>
+        <button class="btn btn-danger btn-sm" onclick="resolveFact(${f.id},'reject')">No</button>
+      </div>`).join("")}</div></div>`:""}
+    <div class="card">
+      <h2>${svg("check")}Accepted facts</h2>
+      <p class="sub">Only these feed your scorecard, gap analysis, and resumes.</p>
+      ${facts||emptyState("twin","Your Twin is empty","Paste a resume above, or add a fact manually to begin.")}
+      <div class="groupttl">Add a fact manually</div>
+      <div class="inline-form">
+        <select id="mf-entity" class="input" aria-label="Fact type"><option value="skill">Skill</option><option value="project">Project</option><option value="experience">Experience</option><option value="education">Education</option><option value="certification">Certification</option></select>
+        <input id="mf-value" class="input" placeholder="e.g. FastAPI" style="flex:2">
+        <button class="btn btn-quiet btn-sm" onclick="addManual()">${svg("plus")}Add</button>
+      </div>
+    </div>`;
+};
+
+VIEW.evidence=function(){
+  const card=state.scorecard; const skills=state.twin?.accepted?.skill||[];
+  let table;
+  if(card && card.rows.length){
+    table=`<table class="score"><thead><tr><th>Skill</th><th style="width:36%">Evidence</th><th class="num" style="text-align:right">Score</th></tr></thead><tbody>`+
+      card.rows.map(r=>`<tr>
+        <td><strong>${esc(r.skill)}</strong><br><span class="chip ${r.band}">${r.band}</span></td>
+        <td><div class="scorebar"><i style="width:${r.score}%;background:${bandColor(r.band)}"></i></div>
+          <details class="ev"><summary>${r.evidence.length} item(s) · why this score</summary>
+            <ul>${r.evidence.map(e=>`<li>${esc(e.type)} (+${e.weight}): ${esc(e.reference)}</li>`).join("")||"<li>none yet</li>"}</ul>
+            <div style="margin-top:4px">${esc(r.rule)}</div></details></td>
+        <td class="num" style="font-size:17px;font-weight:600;text-align:right">${r.score}</td></tr>`).join("")+`</tbody></table>`;
+  } else {
+    table=emptyState("evidence","No scored skills yet","Accept a skill in your Career Twin, then attach evidence here to move the needle.",{label:"Go to Career Twin",action:"navigate('twin')"});
+  }
+  const weights=card?.weights||{};
+  return `${head("Evidence Scorecard","Every score explains itself. Certificates alone are capped at 40/100 — build and ship something to go higher.")}
+    <div class="card">
+      <h2>${svg("evidence")}Scorecard</h2>
+      <p class="sub">${card?esc(card.invariant):"Scores are deterministic and fully inspectable."}</p>
+      ${table}
+    </div>
+    <div class="card">
+      <h2>${svg("plus")}Attach evidence</h2>
+      <p class="sub">Link proof to an accepted skill. Weights: <span class="weights">${Object.entries(weights).map(([k,v])=>`<span class="chip ghost">${esc(k)} +${v}</span>`).join("")||"repo +30, deployment +25 …"}</span></p>
+      <div class="inline-form" style="margin-bottom:8px">
+        <select id="ev-skill" class="input" aria-label="Skill">${skills.map(f=>`<option>${esc(f.value)}</option>`).join("")||`<option value="">No accepted skills yet</option>`}</select>
+        <select id="ev-type" class="input" aria-label="Evidence type">
+          <option value="github_repo">GitHub repo (+30)</option><option value="deployed_artifact">Deployed artifact (+25)</option>
+          <option value="open_source">Open source (+20)</option><option value="project">Project (+20)</option>
+          <option value="hackathon">Hackathon (+15)</option><option value="manual_verified">Manually verified (+15)</option>
+          <option value="blog">Blog (+10)</option><option value="certificate">Certificate (+10)</option>
+        </select>
+      </div>
+      <div class="inline-form">
+        <input id="ev-ref" class="input" placeholder="Link or reference (e.g. github.com/you/project)" style="flex:3">
+        <button class="btn btn-quiet btn-sm" onclick="attachEvidence()">Attach</button>
+      </div>
+    </div>`;
+};
+
+VIEW.gap=function(){
+  const hasSkills=(state.twin?.accepted?.skill||[]).length>0;
+  return `${head("Gap Analysis","Paste a job description. You get an alignment score, the exact limiting factors, and one highest-leverage investment — never a hiring probability.")}
+    <div class="card">
+      <h2>${svg("gap")}Target role</h2>
+      ${hasSkills?"":`<div class="parsebox" style="border-color:var(--amber);background:var(--amber-bg);color:var(--amber)">Add and accept at least one skill in your Career Twin first — analysis needs evidence to reason over.</div>`}
+      <div class="field" style="margin-top:12px"><label for="gap-label">Target label</label><input id="gap-label" class="input" placeholder="e.g. Backend Engineer @ Zerodha"></div>
+      <div class="field"><label for="gap-jd">Job description</label><textarea id="gap-jd" placeholder="Paste the full job description here…"></textarea></div>
+      <button class="btn btn-primary btn-sm" id="gapbtn" onclick="runGap()" ${hasSkills?"":"disabled"}>${svg("spark")}Run gap analysis</button>
+    </div>
+    <div id="gapout">${state.lastGap?gapResultHTML(state.lastGap):`<div class="card"><h2>${svg("info")}Result</h2><p class="sub">Your alignment score, limiting factors, and recommended investment will appear here.</p>${emptyState("gap","No analysis yet","Paste a job description above and run the analysis to see your evidence-based alignment.")}</div>`}</div>`;
+};
+function gapResultHTML(out){
+  const ticks=Array.from({length:11},(_,i)=>`<span class="tick" style="left:${i*10}%"></span>`).join("");
+  return `<div class="card"><h2>${svg("gap")}Alignment — ${esc(out.target)}</h2>
+    <div class="instrument">
+      <div class="gauge"><div class="ticks">${ticks}</div><div class="track"></div>
+        <div class="readout num" id="gauge-readout" style="left:0%">0</div>
+        <div class="needle" id="gauge-needle" style="left:0%"></div></div>
+      <div class="gaugelabels"><span>0</span><span>alignment / 100</span><span>100</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+      <span class="chip info">confidence: ${out.confidence}</span>
+      ${out.fallback_used?'<span class="chip Medium">rule engine (LLM fallback)</span>':'<span class="chip High">LLM-assisted</span>'}
+      <span class="chip ghost num">decision #${out.decision_id}</span>
+    </div>
+    <p style="font-size:13.5px;margin-top:10px">${esc(out.explanation)}</p>
+    <div class="groupttl">Limiting factors</div>
+    ${out.limiting_factors.map(f=>`<div class="factor"><div class="row"><span>${esc(f.skill)}</span><span class="gain">+${f.estimated_gain} est.</span></div><div class="why">${esc(f.why)}</div></div>`).join("")||emptyState("check","No gaps found","Your verified evidence covers every skill this description emphasizes.")}
+    ${out.career_investment?`<div class="invest"><h3>${svg("spark")}Highest-leverage investment: ${esc(out.career_investment.skill)}</h3>
+      <p>${esc(out.career_investment.action)}</p>
+      <p style="color:var(--blue-ink)"><strong>Why:</strong> ${esc(out.career_investment.evidence)}</p>
+      <p style="color:var(--muted)">${esc(out.career_investment.note)}</p></div>`:""}
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-quiet btn-sm" onclick="navigate('resume')">${svg("resume")}Tailor a resume for this target</button>
+    </div>
+    <div class="disclaim">${esc(out.disclaimer)} · basis: ${esc(out.confidence_basis)} · engine ${esc(out.engine_version)}</div></div>`;
+}
+
+VIEW.resume=function(){
+  const d=state.lastDraft;
+  const versions=state.versions;
+  return `${head("Resume Studio","Drafts are built only from your accepted facts, reordered for the target role. Nothing is saved until you approve the diff.")}
+    <div class="card">
+      <h2>${svg("resume")}Draft for a target</h2>
+      <p class="sub">Optionally paste the target's job description to emphasize the right skills. Prefilled from your last gap analysis.</p>
+      <div class="field"><label for="resume-label">Target label</label><input id="resume-label" class="input" placeholder="master"></div>
+      <div class="field"><label for="resume-jd">Job description <span class="hint">(optional)</span></label><textarea id="resume-jd" placeholder="Paste to reorder skills for this role…" style="min-height:90px"></textarea></div>
+      <button class="btn btn-primary btn-sm" id="draftbtn" onclick="makeDraft()">${svg("spark")}Generate draft</button>
+      <div id="draftout">${d?draftHTML(d):""}</div>
+    </div>
+    <div class="card">
+      <h2>${svg("audit")}Version history</h2>
+      <p class="sub">Immutable, git-like. Each approved version links to its parent.</p>
+      <div id="versions">${versions.length?versionsHTML(versions):emptyState("resume","No versions yet","Generate a draft above and approve it to create your first immutable version.")}</div>
+      <div id="versionview"></div>
+    </div>`;
+};
+function draftHTML(out){
+  return `<div class="groupttl">Draft — nothing saved yet</div><pre class="doc">${esc(out.draft)}</pre>
+    <div class="groupttl">Diff vs ${out.base_version?("version "+out.base_version):"— (first version)"}</div>
+    ${diffHTML(out.diff)}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" id="approvebtn" onclick="approveDraft()">${svg("check")}Approve → save new version</button>
+      <button class="btn btn-quiet btn-sm" onclick="discardDraft()">Discard</button>
+    </div>
+    <div class="disclaim">${esc(out.note)}</div>`;
+}
+function diffHTML(diff){
+  if(!diff||!diff.trim()) return `<div class="parsebox">No changes against the current version.</div>`;
+  return `<pre class="diff">`+diff.split("\n").map(l=>{
+    const cls=l.startsWith("+")?"add":l.startsWith("-")?"del":"ctx";
+    return `<span class="${cls}">${esc(l)||" "}</span>`;}).join("")+`</pre>`;
+}
+function versionsHTML(vs){
+  return vs.map(v=>`<div class="vrow"><span><strong class="num">v${v.version}</strong> · ${esc(v.target_label)}
+    <span style="color:var(--muted)">· parent ${v.parent_version??"—"}</span></span>
+    <button class="btn btn-quiet btn-sm" onclick='showVersion(${JSON.stringify(JSON.stringify(v.content))})'>View</button></div>`).join("");
+}
+
+VIEW.audit=function(){
+  const list=state.audit;
+  return `${head("Decision Audit","Every decision is stored with its inputs, evidence, and engine version. Open one to replay its exact reasoning path — deterministically.")}
+    <div class="card">
+      <h2>${svg("audit")}Decisions</h2>
+      <p class="sub">${list.length?list.length+" recorded":"Nothing yet"}</p>
+      ${list.length?list.map(d=>`<button class="arow" id="ar-${d.id}" aria-expanded="${state.replay&&state.replay.decision_id===d.id?"true":"false"}" onclick="replayDecision(${d.id})">
+        <span class="chip info num">#${d.id}</span><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.target||d.kind)}</span>
+        <span class="num">${d.alignment_score??"—"}/100</span>
+        <span class="chip ${d.confidence}">${d.confidence}</span>
+        ${d.fallback_used?'<span class="chip Medium">fallback</span>':""}
+      </button>`).join(""):emptyState("audit","No decisions to replay","Run a gap analysis — every recommendation becomes a replayable record here.",{label:"Go to Gap Analysis",action:"navigate('gap')"})}
+      <div id="replayout">${state.replay?replayHTML(state.replay):""}</div>
+    </div>`;
+};
+function replayHTML(r){
+  const p=r.reasoning_path;
+  return `<div class="replay">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <span class="chip ${r.reproducible?"High":"Low"}">${r.reproducible?"✓ reproducible — byte-identical recomputation":"✗ did not reproduce"}</span>
+      ${r.twin_changed_since?'<span class="chip Medium">Twin changed since this decision</span>':'<span class="chip info">Twin unchanged</span>'}
+    </div>
+    <dl>
+      <dt>Inputs</dt><dd>${esc(p.inputs.target||"")} — “${esc(p.inputs.jd_excerpt)}…”</dd>
+      <dt>Twin hash at decision</dt><dd class="kv">${esc(p.twin_hash_at_decision)}</dd>
+      <dt>Engine</dt><dd class="kv">${esc(p.engine_version)} · fallback: ${p.fallback_used}</dd>
+      <dt>Rule applied</dt><dd>${esc(p.rule)}</dd>
+      <dt>Evidence used (${p.evidence_used.length})</dt>
+      <dd>${p.evidence_used.slice(0,10).map(e=>`<span class="chip ${e.status}">${esc(e.skill)} · jd×${e.jd_mentions} · ev ${e.evidence_score}</span>`).join(" ")||"—"}</dd>
+      <dt>Original → recomputed alignment</dt>
+      <dd class="num">${r.original_output.alignment_score} → ${r.recomputed.alignment_score}</dd>
+    </dl></div>`;
+}
+
+/* ================= ACTIONS ================= */
+function renderParseReport(rep){
+  const el=$("parsereport"); if(!el) return;
+  const tiers=rep.hitl_policy;
+  el.innerHTML=`<div class="parsebox">
+    <strong>${rep.facts.length}</strong> facts extracted · stages: <span class="num">${esc(rep.stages_used.join(" → ")||"none")}</span>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      <span class="chip accepted">accepted ${esc(tiers.accepted)}</span>
+      <span class="chip pending">pending ${esc(tiers.pending)}</span>
+      <span class="chip manual_review">review ${esc(tiers.manual_review)}</span></div>
+    ${rep.warnings.map(w=>`<div style="color:var(--red);margin-top:6px">${esc(w)}</div>`).join("")}
+  </div>`;
+}
+async function ingest(){
+  const text=($("resumetext")||{}).value||""; if(!text.trim()) return toast("Paste your resume text first.",true);
+  await busy($("ingestbtn"),async()=>{
+    try{ const rep=await api("/api/twin/resume",{method:"POST",body:JSON.stringify({text})});
+      state.forms["resumetext"]=""; await refreshTwin();
+      renderRoute(); renderParseReport(rep);
+      toast("Resume analyzed — review any pending facts.");
+    }catch(e){ toast(e.message,true); }
+  });
+}
+async function ingestFile(){
+  const inp=$("resumefile"); const f=inp.files[0]; if(!f) return;
+  try{
+    progress(true);
+    const fd=new FormData(); fd.append("file",f);
+    const res=await fetch("/api/twin/resume/file",{method:"POST",headers:{"Authorization":"Bearer "+state.token},body:fd});
+    const body=await res.json(); if(!res.ok) throw new Error(body.detail||"Upload failed");
+    await refreshTwin(); renderRoute(); renderParseReport(body); toast("File analyzed.");
+  }catch(e){ toast(e.message,true); } finally{ progress(false); if(inp) inp.value=""; }
+}
+async function addManual(){
+  const value=($("mf-value")||{}).value?.trim()||""; if(value.length<2) return toast("Enter a value first.",true);
+  try{ await api("/api/twin/facts",{method:"POST",body:JSON.stringify({entity:$("mf-entity").value,value})});
+    state.forms["mf-value"]=""; await refreshTwin(); renderRoute(); toast("Fact added and accepted.");
+  }catch(e){ toast(e.message,true); }
+}
+async function resolveFact(id,action){
+  try{ await api(`/api/twin/facts/${id}/${action}`,{method:"POST"});
+    await refreshTwin(); renderRoute();
+    toast(action==="confirm"?"Confirmed — now part of your Twin.":"Rejected — kept in the log, never used.");
+  }catch(e){ toast(e.message,true); }
+}
+async function attachEvidence(){
+  const skill=($("ev-skill")||{}).value||"", reference=($("ev-ref")||{}).value?.trim()||"";
+  if(!skill) return toast("Accept a skill first.",true);
+  if(reference.length<3) return toast("Add a link or reference.",true);
+  try{ await api("/api/twin/evidence",{method:"POST",body:JSON.stringify({skill,type:$("ev-type").value,reference})});
+    state.forms["ev-ref"]=""; await refreshTwin(); renderRoute(); toast("Evidence attached to "+skill+".");
+  }catch(e){ toast(e.message,true); }
+}
+async function runGap(){
+  const jd=($("gap-jd")||{}).value||""; if(jd.trim().length<30) return toast("Paste a fuller job description (30+ characters).",true);
+  await busy($("gapbtn"),async()=>{
+    try{
+      const out=await api("/api/decisions/gap-analysis",{method:"POST",
+        body:JSON.stringify({jd_text:jd,target_label:($("gap-label").value||"").trim()||"Target role"})});
+      state.lastGap=out; state.lastDecisionId=out.decision_id;
+      state.forms["resume-jd"]=jd; state.forms["resume-label"]=($("gap-label").value||"").trim()||"master";
+      await refreshAudit(); await refreshMission();
+      $("gapout").innerHTML=gapResultHTML(out); animateGauge();
+      renderNav(); renderMissionPill();
+      toast("Gap analysis complete — decision #"+out.decision_id+" recorded.");
+    }catch(e){ toast(e.message,true); }
+  });
+}
+function animateGauge(){
+  const out=state.lastGap; if(!out) return;
+  const n=$("gauge-needle"),r=$("gauge-readout"); if(!n||!r) return;
+  const target=out.alignment_score;
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  if(reduce){ n.style.left=target+"%"; r.style.left=target+"%"; r.textContent=target; return; }
+  requestAnimationFrame(()=>{ n.style.left=target+"%"; r.style.left=target+"%"; });
+  const t0=performance.now(), dur=600;
+  (function tick(t){ const k=Math.min(1,(t-t0)/dur); r.textContent=Math.round(target*(0.2+0.8*k*(2-k)));
+    if(k<1) requestAnimationFrame(tick); else r.textContent=target; })(t0);
+}
+async function makeDraft(){
+  await busy($("draftbtn"),async()=>{
+    try{
+      const out=await api("/api/resume/draft",{method:"POST",
+        body:JSON.stringify({jd_text:($("resume-jd").value||""),target_label:($("resume-label").value||"").trim()||"master"})});
+      state.lastDraft=out; $("draftout").innerHTML=draftHTML(out);
+    }catch(e){ toast(e.message,true); }
+  });
+}
+async function approveDraft(){
+  if(!state.lastDraft) return;
+  await busy($("approvebtn"),async()=>{
+    try{
+      const v=await api("/api/resume/approve",{method:"POST",body:JSON.stringify({
+        content:state.lastDraft.draft,target_label:($("resume-label").value||"").trim()||"master",
+        decision_id:state.lastDecisionId})});
+      state.lastDraft=null; await refreshVersions(); renderRoute();
+      toast("Approved — saved as version "+v.version+".");
+    }catch(e){ toast(e.message,true); }
+  });
+}
+function discardDraft(){ state.lastDraft=null; const el=$("draftout"); if(el) el.innerHTML=""; toast("Draft discarded — nothing was saved."); }
+function showVersion(payload){ const content=JSON.parse(payload);
+  const el=$("versionview"); if(el){ el.innerHTML=`<div class="groupttl">Saved version (read-only)</div><pre class="doc">${esc(content)}</pre>`;
+    el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"nearest"}); } }
+async function replayDecision(id){
+  try{ const r=await api(`/api/audit/${id}/replay`,{method:"POST"}); state.replay=r; renderRoute();
+    const el=$("replayout"); if(el) el.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"nearest"});
+  }catch(e){ toast(e.message,true); }
+}
+async function toggleKill(on){
+  try{ await api("/api/admin/llm-kill-switch",{method:"POST",body:JSON.stringify({llm_down:on})});
+    state.killDenied=false; await refreshMission(); renderRoute();
+    toast(on?"LLM outage simulated — the next analysis degrades gracefully.":"LLM restored.");
+  }catch(e){
+    if(e.status===403){ state.killDenied=true; renderRoute(); toast("Kill switch is admin-only.",true); }
+    else toast(e.message,true);
+  }
+}
+
+/* ================= BOOT ================= */
+async function enterApp(){
+  $("landing").classList.add("hidden"); $("shell").classList.remove("hidden");
+  $("userchip").textContent=state.name||state.email||"";
+  if(!ROUTES.includes(currentRoute())) location.hash="#/overview";
+  renderNav(); renderMissionPill();
+  $("main").setAttribute("aria-busy","true");
+  $("main").innerHTML=`<div class="viewhead"><h1 tabindex="-1">Loading your workspace…</h1></div>
+    <div class="card"><div class="skel" style="width:70%"></div><div class="skel" style="width:90%"></div><div class="skel" style="width:50%"></div></div>`;
+  try{ await loadAll(); }catch(e){ toast(e.message,true); }
+  $("main").setAttribute("aria-busy","false");
+  renderRoute();
+}
+window.addEventListener("hashchange",()=>{ if(state.token){ saveForms(); renderRoute(); } });
+if(state.token) enterApp();
+</script>
+</body>
+</html>
